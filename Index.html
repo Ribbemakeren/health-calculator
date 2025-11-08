@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <title>UrBMI — Health & Fitness Calculators</title>
+  <style>
+    :root{
+      --bg: linear-gradient(135deg,#cce5ff,#e6f2ff);
+      --card:#ffffff;
+      --muted:#6b7280;
+      --accent:#007bff;
+      --accent-600:#0056cc;
+      --success:#16a34a;
+      --warning:#f59e0b;
+      --danger:#ef4444;
+      --shadow:0 8px 20px rgba(0,0,0,0.08);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:Segoe UI, Roboto, -apple-system, system-ui, sans-serif;margin:0;background:var(--bg);color:#0f172a;-webkit-font-smoothing:antialiased}
+
+    /* NAV */
+    .navbar{max-width:1100px;margin:18px auto 0;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{font-weight:800;color:var(--accent);font-size:20px}
+    .subtitle{color:var(--muted);font-size:13px}
+
+    .controls-top{display:flex;align-items:center;gap:10px}
+    .units{padding:8px 10px;border-radius:10px;border:1px solid rgba(0,0,0,0.06);background:rgba(255,255,255,0.6)}
+
+    .navlinks{display:flex;gap:8px;flex-wrap:wrap}
+    .navlinks button{background:transparent;border:0;padding:8px 12px;border-radius:10px;color:#04335f;cursor:pointer;font-weight:700}
+    .navlinks button.active,.navlinks button:hover{background:rgba(0,123,255,0.08)}
+
+    /* MAIN */
+    .wrap{max-width:980px;margin:18px auto;padding:12px}
+    .card{background:var(--card);border-radius:14px;box-shadow:var(--shadow);padding:22px;margin-top:18px;transition:transform .22s,box-shadow .22s}
+    .card:hover{transform:translateY(-3px)}
+    header h1{margin:0;font-size:22px;color:var(--accent)}
+    p.lead{margin:.4rem 0 0;color:var(--muted)}
+
+    .grid{display:grid;grid-template-columns:1fr 360px;gap:18px;margin-top:18px}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+
+    form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    input[type=number],select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e9ef;font-size:15px}
+
+    .btn{background:var(--accent);color:white;padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+    .btn.secondary{background:transparent;color:var(--accent);border:1px solid rgba(0,123,255,0.12)}
+
+    .result{margin-top:12px;padding:14px;border-radius:12px;background:linear-gradient(90deg,#ffffff,#fbfdff);display:flex;flex-direction:column;gap:10px;transition:background .35s ease,border-color .35s}
+    .result-row{display:flex;align-items:center;gap:12px}
+    .value{font-size:28px;font-weight:700}
+    .meta{color:var(--muted)}
+
+    .bar{position:relative;width:100%;height:14px;border-radius:10px;background:#e6eefc;overflow:hidden}
+    .indicator{position:absolute;left:0;top:0;height:100%;width:0;border-radius:10px;transition:width .9s cubic-bezier(.2,.9,.3,1),background .3s}
+
+    .sidecard{padding:18px}
+    .chip{padding:6px 10px;border-radius:999px;background:#f3f4f6;font-size:13px}
+
+    footer.note{margin-top:14px;color:var(--muted);font-size:13px}
+    small.hint{display:block;color:var(--muted);margin-top:6px}
+
+    .section{display:none}
+    .section.active{display:block}
+    @media (max-width:640px){form{grid-template-columns:1fr} .sidecard{order:-1}}
+
+    /* subtle background tints for result cards */
+    .tint-success{background:linear-gradient(90deg,#f3fff5,#ffffff)}
+    .tint-warning{background:linear-gradient(90deg,#fffaf0,#ffffff)}
+    .tint-danger{background:linear-gradient(90deg,#fff6f6,#ffffff)}
+    .tint-accent{background:linear-gradient(90deg,#f0f8ff,#ffffff)}
+
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <div class="brand">
+      <div class="logo">UrBmi</div>
+      <div class="subtitle">Health &amp; Fitness calculators</div>
+    </div>
+
+    <div class="controls-top">
+      <div class="navlinks" role="navigation" aria-label="Main navigation">
+        <button class="navbtn active" data-target="bmi">BMI</button>
+        <button class="navbtn" data-target="bmr">BMR</button>
+        <button class="navbtn" data-target="tdee">TDEE</button>
+        <button class="navbtn" data-target="calories">Calories</button>
+        <button class="navbtn" data-target="bodyfat">Body Fat</button>
+        <button class="navbtn" data-target="ideal">Ideal Weight</button>
+        <button class="navbtn" data-target="whr">Waist/Height</button>
+      </div>
+
+      <div style="width:14px"></div>
+      <div class="units" title="Units for all calculators">
+        <label for="globalUnits" style="font-size:12px;color:var(--muted);margin-right:6px;">Units</label>
+        <select id="globalUnits" style="border:0;background:transparent;font-weight:700">
+          <option value="metric">Metric — kg / cm</option>
+          <option value="imperial">Imperial — lb / in</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap">
+    <div class="card">
+      <header>
+        <h1>Fitness Tools</h1>
+        <p class="lead">A suite of client-side calculators. Switch units above — applies to all tools.</p>
+      </header>
+
+      <div class="grid">
+        <div>
+
+          <!-- BMI -->
+          <section id="bmi" class="section active">
+            <h2>BMI Calculator</h2>
+            <form id="bmiForm">
+              <div>
+                <label for="bmiWeight">Weight</label>
+                <input id="bmiWeight" type="number" min="1" step="1" placeholder="e.g. 70">
+              </div>
+
+              <div>
+                <label for="bmiHeight">Height</label>
+                <input id="bmiHeight" type="number" min="1" step="1" placeholder="e.g. 175">
+              </div>
+
+              <div>
+                <label for="bmiAge">Age</label>
+                <input id="bmiAge" type="number" min="1" max="120" step="1" placeholder="e.g. 30">
+              </div>
+
+              <div>
+                <label for="bmiGender">Gender</label>
+                <select id="bmiGender"><option value="unspecified">Prefer not to say</option><option value="male">Male</option><option value="female">Female</option></select>
+              </div>
+
+              <div class="controls full" style="grid-column:1/-1;margin-top:8px">
+                <button type="button" class="btn" id="bmiCalc">Calculate</button>
+                <button type="button" class="btn secondary" id="bmiReset">Reset</button>
+              </div>
+            </form>
+
+            <div id="bmiResultBox" class="result" aria-live="polite" hidden>
+              <div class="result-row">
+                <div>
+                  <div class="value" id="bmiValue">—</div>
+                  <div class="meta" id="bmiCategory">—</div>
+                </div>
+
+                <div style="margin-left:auto;max-width:260px">
+                  <small class="hint">Visual indicator</small>
+                  <div class="bar" aria-hidden="true"><div class="indicator" id="bmiIndicator"></div></div>
+                </div>
+              </div>
+              <div class="meta" id="bmiAdvice">—</div>
+            </div>
+          </section>
+
+          <!-- BMR -->
+          <section id="bmr" class="section">
+            <h2>BMR (Basal Metabolic Rate)</h2>
+            <form id="bmrForm">
+              <div>
+                <label for="bmrAge">Age</label>
+                <input id="bmrAge" type="number" min="1" max="120" step="1" placeholder="e.g. 30">
+              </div>
+
+              <div>
+                <label for="bmrHeight">Height</label>
+                <input id="bmrHeight" type="number" min="1" step="1" placeholder="e.g. 175">
+              </div>
+
+              <div>
+                <label for="bmrWeight">Weight</label>
+                <input id="bmrWeight" type="number" min="1" step="1" placeholder="e.g. 70">
+              </div>
+
+              <div>
+                <label for="bmrGender">Gender</label>
+                <select id="bmrGender"><option value="male">Male</option><option value="female">Female</option></select>
+              </div>
+
+              <div class="controls full" style="grid-column:1/-1;margin-top:8px">
+                <button type="button" class="btn" id="bmrCalc">Calculate</button>
+                <button type="button" class="btn secondary" id="bmrReset">Reset</button>
+              </div>
+            </form>
+
+            <div id="bmrResultBox" class="result" aria-live="polite" hidden>
+              <div class="result-row">
+                <div>
+                  <div class="value" id="bmrValue">—</div>
+                  <div class="meta">Basal metabolic rate (kcal/day)</div>
+                </div>
+                <div style="margin-left:auto;max-width:260px">
+                  <small class="hint">Energy baseline</small>
+                  <div class="bar"><div class="indicator" id="bmrIndicator"></div></div>
+                </div>
+              </div>
+              <div class="meta" id="bmrAdvice">—</div>
+            </div>
+          </section>
+
+          <!-- TDEE -->
+          <section id="tdee" class="section">
+            <h2>TDEE (Total Daily Energy Expenditure)</h2>
+            <form id="tdeeForm">
+              <div>
+                <label for="tdeeBmrInput">BMR (kcal/day)</label>
+                <input id="tdeeBmrInput" type="number" placeholder="Enter BMR or calculate above">
+              </div>
+
+              <div>
+                <label for="tdeeActivity">Activity level</label>
+                <select id="tdeeActivity">
+                  <option value="1.2">Sedentary (little or no exercise)</option>
+                  <option value="1.375">Lightly active (1–3 days/week)</option>
+                  <option value="1.55">Moderately active (3–5 days/week)</option>
+                  <option value="1.725">Very active (6–7 days/week)</option>
+                  <option value="1.9">Extra active (very heavy exercise)</option>
+                </select>
+              </div>
+
+              <div class="controls full" style="grid-column:1/-1;margin-top:8px">
+                <button type="button" class="btn" id="tdeeCalc">Calculate</button>
+                <button type="button" class="btn secondary" id="tdeeReset">Reset</button>
+              </div>
+            </form>
+
+            <div id="tdeeResultBox" class="result" aria-live="polite" hidden>
+              <div class="result-row">
+                <div>
+                  <div class="value" id="tdeeValue">—</div>
+                  <div class="meta">Estimated daily calories</div>
+                </div>
+                <div style="margin-left:auto;max-width:260px">
+                  <small class="hint">Visual indicator</small>
+                  <div class="bar"><div class="indicator" id="tdeeIndicator"></div></div>
+                </div>
+              </div>
+              <div class="meta" id="tdeeAdvice">—</div>
+            </div>
+          </section>
+
+          <!-- Calories intake -->
+          <section id="calories" class="section">
+            <h2>Calorie Intake Recommendation</h2>
+            <form id="calForm">
+              <div>
+                <label for="calTdeeInput">TDEE (kcal/day)</label>
+                <input id="calTdeeInput" type="number" placeholder="Enter TDEE or calculate above">
+              </div>
+
+              <div>
+                <label for="calGoal">Goal</label>
+                <select id="calGoal">
+                  <option value="lose">Lose weight (–500 kcal/day)</option>
+                  <option value="maintain">Maintain weight</option>
+                  <option value="gain">Gain weight (+500 kcal/day)</option>
+                </select>
+              </div>
+
+              <div class="controls full" style="grid-column:1/-1;margin-top:8px">
+                <button type="button" class="btn" id="calCalc">Calculate</button>
+                <button type="button" class="btn secondary" id="calReset">Reset</button>
+              </div>
+            </form>
+
+            <div id="calResultBox" class="result" aria-live="polite" hidden>
+              <div class="result-row">
+                <div>
+                  <div class="value" id="calValue">—</div>
+                  <div class="meta">Recommended daily intake</div>
+                </div>
+                <div style="margin-left:auto;max-width:260px">
+                  <small class="hint">Target indicator</small>
+                  <div class="bar"><div class="indicator" id="calIndicator"></div></div>
+                </div>
+              </div>
+              <div class="meta" id="calAdvice">—</div>
+            </div>
+          </section>
+
+          <!-- Body Fat -->
+          <section id="bodyfat" class="section">
+            <h2>Body Fat % (US Navy method)</h2>
+            <form id="bfForm">
+              <div>
+                <label for="bfWaist">Waist</label>
+                <input id="bfWaist" type="number" min="1" step="1" placeholder="e.g. 85">
+              </div>
+
+              <div>
+                <label for="bfNeck">Neck</label>
+                <input id="bfNeck" type="number" min="1" step="1" placeholder="e.g. 38">
+              </div>
+
+              <div>
+                <label for="bfHeight">Height</label>
+                <input id="bfHeight" type="number" min="1" step="1" placeholder="e.g. 175">
+              </div>
+
+              <div>
+                <label for="bfHip">Hip — females only</label>
+                <input id="bfHip" type="number" min="1" step="1" placeholder="e.g. 100">
+              </div>
+
+              <div class="controls full" style="grid-column:1/-1;margin-top:8px">
+                <button type="button" class="btn" id="bfCalc">Estimate</button>
+                <button type="button" class="btn secondary" id="bfReset">Reset</button>
+              </div>
+            </form>
+
+            <div id="bfResultBox" class="result" aria-live="polite" hidden>
+              <div class="result-row">
+                <div>
+                  <div class="value" id="bfValue">—</div>
+                  <div class="meta">Estimated body fat %</div>
+                </div>
+                <div style="margin-left:auto;max-width:260px">
+                  <small class="hint">Body fat range</small>
+                  <div class="bar"><div class="indicator" id="bfIndicator"></div></div>
+                </div>
+              </div>
+              <div class="meta" id="bfAdvice">—</div>
+            </div>
+          </section>
+
+          <!-- Ideal weight -->
+          <section id="ideal" class="section">
+            <h2>Ideal Weight (Devine)</h2>
+            <form id="idealForm">
+              <div>
+                <label for="idealHeight">Height</label>
+                <input id="idealHeight" type="number" min="1" step="1" placeholder="e.g. 175">
+              </div>
+
+              <div class="controls full" style="grid-column:1/-1;margin-top:8px">
+                <button type="button" class="btn" id="idealCalc">Calculate</button>
+                <button type="button" class="btn secondary" id="idealReset">Reset</button>
+              </div>
+            </form>
+
+            <div id="idealResultBox" class="result" aria-live="polite" hidden>
+              <div class="result-row">
+                <div>
+                  <div class="value" id="idealValue">—</div>
+                  <div class="meta">Estimated ideal weight</div>
+                </div>
+                <div style="margin-left:auto;max-width:260px">
+                  <small class="hint">Reference indicator</small>
+                  <div class="bar"><div class="indicator" id="idealIndicator"></div></div>
+                </div>
+              </div>
+              <div class="meta" id="idealAdvice">—</div>
+            </div>
+          </section>
+
+          <!-- Waist-to-Height -->
+          <section id="whr" class="section">
+            <h2>Waist-to-Height Ratio</h2>
+            <form id="whrForm">
+              <div>
+                <label for="whrWaist">Waist</label>
+                <input id="whrWaist" type="number" min="1" step="1" placeholder="e.g. 85">
+              </div>
+
+              <div>
+                <label for="whrHeight">Height</label>
+                <input id="whrHeight" type="number" min="1" step="1" placeholder="e.g. 175">
+              </div>
+
+              <div class="controls full" style="grid-column:1/-1;margin-top:8px">
+                <button type="button" class="btn" id="whrCalc">Calculate</button>
+                <button type="button" class="btn secondary" id="whrReset">Reset</button>
+              </div>
+            </form>
+
+            <div id="whrResultBox" class="result" aria-live="polite" hidden>
+              <div class="result-row">
+                <div>
+                  <div class="value" id="whrValue">—</div>
+                  <div class="meta">Waist / Height</div>
+                </div>
+                <div style="margin-left:auto;max-width:260px">
+                  <small class="hint">Risk indicator</small>
+                  <div class="bar"><div class="indicator" id="whrIndicator"></div></div>
+                </div>
+              </div>
+              <div class="meta" id="whrAdvice">—</div>
+            </div>
+          </section>
+
+        </div>
+
+        <aside class="sidecard card">
+          <h3 style="margin:0 0 8px">Quick tips</h3>
+          <p class="meta" style="color:var(--muted)">Friendly guidance shown under each result — examples:</p>
+          <ul style="margin-top:10px;color:#16324b">
+            <li><strong>Underweight:</strong> Consider nutritional guidance.</li>
+            <li><strong>Normal:</strong> Keep maintaining a healthy lifestyle!</li>
+            <li><strong>Overweight:</strong> Try more activity and a balanced diet.</li>
+            <li><strong>Obese:</strong> Seek medical consultation for proper advice.</li>
+          </ul>
+
+          <div style="margin-top:12px" class="chip">All calculators run locally — no data is sent anywhere.</div>
+          <footer class="note">This site is informational only and not a medical diagnostic tool. Consult healthcare professionals for personalized advice.</footer>
+        </aside>
+
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // NAV
+    document.querySelectorAll('.navbtn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.dataset.target;
+        document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+        document.getElementById(target).classList.add('active');
+        window.scrollTo({top:0,behavior:'smooth'});
+      });
+    });
+
+    const unitsSelect = document.getElementById('globalUnits');
+    // Update labels/placeholders when units change
+    unitsSelect.addEventListener('change', ()=>{
+      const units = unitsSelect.value;
+      // BMI/BMR/BodyFat/WHR/Ideal use same placeholders: weight (kg or lb), height (cm or in), waist/neck/hip
+      const weightPlace = units==='metric' ? 'e.g. 70 (kg)' : 'e.g. 154 (lb)';
+      const heightPlace = units==='metric' ? 'e.g. 175 (cm)' : 'e.g. 69 (in)';
+      document.querySelectorAll('#bmiWeight,#bmrWeight').forEach(i=>i.placeholder=weightPlace);
+      document.querySelectorAll('#bmiHeight,#bmrHeight,#bfHeight,#idealHeight,#whrHeight').forEach(i=>i.placeholder=heightPlace);
+      document.querySelectorAll('#bfWaist,#whrWaist,#bfNeck,#bfHip').forEach(i=> i.placeholder = units==='metric' ? 'cm' : 'in');
+    });
+
+    // Helper: set indicator width and subtle background tint on result box
+    function setIndicator(indEl, boxEl, value, maxScale, colorVar){
+      const width = Math.max(0, Math.min(100, (value / maxScale) * 100));
+      indEl.style.width = width + '%';
+      indEl.style.background = colorVar;
+
+      // apply subtle tint to box background
+      boxEl.classList.remove('tint-success','tint-warning','tint-danger','tint-accent');
+      if(colorVar === 'var(--success)') boxEl.classList.add('tint-success');
+      else if(colorVar === 'var(--warning)') boxEl.classList.add('tint-warning');
+      else if(colorVar === 'var(--danger)') boxEl.classList.add('tint-danger');
+      else boxEl.classList.add('tint-accent');
+      boxEl.hidden = false;
+    }
+
+    // ===== BMI =====
+    document.getElementById('bmiCalc').addEventListener('click', ()=>{
+      const units = unitsSelect.value;
+      const weight = parseFloat(document.getElementById('bmiWeight').value);
+      const height = parseFloat(document.getElementById('bmiHeight').value);
+      const age = parseInt(document.getElementById('bmiAge').value);
+      if(!weight||!height){ alert('Please enter weight and height.'); return; }
+      let bmi;
+      if(units==='metric'){ const m = height/100; bmi = weight / (m*m); }
+      else { bmi = 703 * weight / (height*height); }
+      const val = Number(bmi.toFixed(1));
+      let cat, advice, cname;
+      if(val < 18.5){cat='Underweight'; advice='Consider nutritional guidance.'; cname='under';}
+      else if(val < 25){cat='Normal weight'; advice='Keep maintaining a healthy lifestyle!'; cname='normal';}
+      else if(val < 30){cat='Overweight'; advice='Try more activity and a balanced diet.'; cname='over';}
+      else {cat='Obese'; advice='Seek medical consultation for proper advice.'; cname='obese';}
+      if(age && age < 18) advice = 'For under 18, BMI interpretation varies. Consult a doctor.';
+      document.getElementById('bmiValue').textContent = val;
+      document.getElementById('bmiCategory').textContent = cat;
+      document.getElementById('bmiAdvice').textContent = advice;
+      const color = val < 18.5 ? 'var(--accent)' : (val < 25 ? 'var(--success)' : (val < 30 ? 'var(--warning)' : 'var(--danger)'));
+      setIndicator(document.getElementById('bmiIndicator'), document.getElementById('bmiResultBox'), val, 40, color);
+    });
+    document.getElementById('bmiReset').addEventListener('click', ()=>{['bmiWeight','bmiHeight','bmiAge'].forEach(id=>document.getElementById(id).value='');document.getElementById('bmiResultBox').hidden=true});
+
+    // ===== BMR =====
+    document.getElementById('bmrCalc').addEventListener('click', ()=>{
+      const units = unitsSelect.value;
+      const age = parseFloat(document.getElementById('bmrAge').value);
+      let height = parseFloat(document.getElementById('bmrHeight').value);
+      let weight = parseFloat(document.getElementById('bmrWeight').value);
+      const gender = document.getElementById('bmrGender').value;
+      if(!age||!height||!weight){ alert('Please enter age, height and weight.'); return; }
+      // convert if imperial
+      if(units==='imperial'){ weight = weight * 0.45359237; height = height * 2.54; }
+      let bmr;
+      if(gender==='male') bmr = 10*weight + 6.25*height - 5*age + 5;
+      else bmr = 10*weight + 6.25*height - 5*age -161;
+      const rounded = Math.round(bmr);
+      document.getElementById('bmrValue').textContent = rounded + ' kcal/day';
+      document.getElementById('bmrAdvice').textContent = 'This is an estimate of calories burned at rest.';
+      // color mapping subtle
+      const color = rounded < 1400 ? 'var(--accent)' : (rounded < 2000 ? 'var(--success)' : (rounded < 2600 ? 'var(--warning)' : 'var(--danger)'));
+      setIndicator(document.getElementById('bmrIndicator'), document.getElementById('bmrResultBox'), rounded, 3000, color);
+      // convenience copy
+      document.getElementById('tdeeBmrInput').value = rounded;
+    });
+    document.getElementById('bmrReset').addEventListener('click', ()=>{['bmrAge','bmrHeight','bmrWeight'].forEach(id=>document.getElementById(id).value='');document.getElementById('bmrResultBox').hidden=true});
+
+    // ===== TDEE =====
+    document.getElementById('tdeeCalc').addEventListener('click', ()=>{
+      const bmr = parseFloat(document.getElementById('tdeeBmrInput').value);
+      const act = parseFloat(document.getElementById('tdeeActivity').value);
+      if(!bmr){ alert('Enter BMR (or calculate it first).'); return; }
+      const tdee = Math.round(bmr * act);
+      document.getElementById('tdeeValue').textContent = tdee + ' kcal/day';
+      document.getElementById('tdeeAdvice').textContent = 'Estimated daily energy needs based on activity.';
+      const color = tdee < 1800 ? 'var(--accent)' : (tdee < 2500 ? 'var(--success)' : (tdee < 3200 ? 'var(--warning)' : 'var(--danger)'));
+      setIndicator(document.getElementById('tdeeIndicator'), document.getElementById('tdeeResultBox'), tdee, 4000, color);
+      document.getElementById('calTdeeInput').value = tdee;
+    });
+    document.getElementById('tdeeReset').addEventListener('click', ()=>{document.getElementById('tdeeBmrInput').value='';document.getElementById('tdeeResultBox').hidden=true});
+
+    // ===== Calorie Intake =====
+    document.getElementById('calCalc').addEventListener('click', ()=>{
+      const tdee = parseFloat(document.getElementById('calTdeeInput').value);
+      const goal = document.getElementById('calGoal').value;
+      if(!tdee){ alert('Enter TDEE first.'); return; }
+      let target = tdee;
+      if(goal==='lose') target = Math.max(800, Math.round(tdee - 500));
+      else if(goal==='gain') target = Math.round(tdee + 500);
+      document.getElementById('calValue').textContent = target + ' kcal/day';
+      const advice = goal==='lose' ? 'A common safe target is ~0.5 kg/week. Consult a professional.' : (goal==='gain' ? 'Aim for gradual weight gain with strength training.' : 'Maintain current intake for weight stability.');
+      document.getElementById('calAdvice').textContent = advice;
+      const color = goal==='lose' ? 'var(--warning)' : (goal==='gain' ? 'var(--accent)' : 'var(--success)');
+      setIndicator(document.getElementById('calIndicator'), document.getElementById('calResultBox'), target, 4000, color);
+    });
+    document.getElementById('calReset').addEventListener('click', ()=>{document.getElementById('calTdeeInput').value='';document.getElementById('calResultBox').hidden=true});
+
+    // ===== Body Fat =====
+    document.getElementById('bfCalc').addEventListener('click', ()=>{
+      const units = unitsSelect.value;
+      const waist = parseFloat(document.getElementById('bfWaist').value);
+      const neck = parseFloat(document.getElementById('bfNeck').value);
+      let height = parseFloat(document.getElementById('bfHeight').value);
+      const hip = parseFloat(document.getElementById('bfHip').value) || 0;
+      if(!waist||!neck||!height){ alert('Enter waist, neck and height.'); return; }
+      let w=waist,n=neck,h=height;
+      if(units==='imperial'){ w = waist * 2.54; n = neck * 2.54; h = height * 2.54; }
+      let bf;
+      const gender = document.getElementById('bfGender').value;
+      if(gender==='male'){
+        bf = 495 / (1.0324 - 0.19077 * Math.log10(w - n) + 0.15456 * Math.log10(h)) - 450;
+      } else {
+        const hipcm = units==='imperial' ? hip * 2.54 : hip;
+        bf = 495 / (1.29579 - 0.35004 * Math.log10(w + hipcm - n) + 0.22100 * Math.log10(h)) - 450;
+      }
+      const val = Number(bf.toFixed(1));
+      document.getElementById('bfValue').textContent = val + '%';
+      let advice = 'Estimated body fat percentage.';
+      let color = 'var(--success)';
+      if(gender==='male'){
+        if(val < 6) {advice='Very low body fat — check with professional.'; color='var(--accent)'}
+        else if(val < 18) {advice='Healthy body fat range.'; color='var(--success)'}
+        else if(val < 25) {advice='Slightly high — consider activity and diet.'; color='var(--warning)'}
+        else {advice='High body fat — consult a healthcare professional.'; color='var(--danger)'}
+      } else {
+        if(val < 14) {advice='Very low body fat — check with professional.'; color='var(--accent)'}
+        else if(val < 25) {advice='Healthy body fat range.'; color='var(--success)'}
+        else if(val < 32) {advice='Slightly high — consider activity and diet.'; color='var(--warning)'}
+        else {advice='High body fat — consult a healthcare professional.'; color='var(--danger)'}
+      }
+      document.getElementById('bfAdvice').textContent = advice;
+      setIndicator(document.getElementById('bfIndicator'), document.getElementById('bfResultBox'), val, 45, color);
+    });
+    document.getElementById('bfReset').addEventListener('click', ()=>{['bfWaist','bfNeck','bfHeight','bfHip'].forEach(id=>document.getElementById(id).value='');document.getElementById('bfResultBox').hidden=true});
+
+    // ===== Ideal weight (Devine) =====
+    document.getElementById('idealCalc').addEventListener('click', ()=>{
+      const units = unitsSelect.value;
+      let height = parseFloat(document.getElementById('idealHeight').value);
+      if(!height){ alert('Enter height.'); return; }
+      if(units==='imperial') height = height * 2.54; // convert inches to cm
+      const idealMale = 50 + 0.9 * (height - 152);
+      const idealFemale = 45.5 + 0.9 * (height - 152);
+      const display = `${idealMale.toFixed(1)} kg (male) / ${idealFemale.toFixed(1)} kg (female)`;
+      document.getElementById('idealValue').textContent = display;
+      document.getElementById('idealAdvice').textContent = 'Devine formula — a simple clinical reference, not definitive.';
+      setIndicator(document.getElementById('idealIndicator'), document.getElementById('idealResultBox'), Math.max(idealMale,idealFemale), 120, 'var(--success)');
+    });
+    document.getElementById('idealReset').addEventListener('click', ()=>{document.getElementById('idealHeight').value='';document.getElementById('idealResultBox').hidden=true});
+
+    // ===== Waist-to-height =====
+    document.getElementById('whrCalc').addEventListener('click', ()=>{
+      const units = unitsSelect.value;
+      let waist = parseFloat(document.getElementById('whrWaist').value);
+      let height = parseFloat(document.getElementById('whrHeight').value);
+      if(!waist||!height){ alert('Enter waist and height.'); return; }
+      if(units==='imperial'){ waist = waist * 2.54; height = height * 2.54; }
+      const ratio = waist / height;
+      const display = ratio.toFixed(2);
+      let advice, color;
+      if(ratio < 0.4){ advice='Low — may indicate low fat stores.'; color='var(--accent)'; }
+      else if(ratio < 0.5){ advice='Healthy range — keep maintaining a healthy lifestyle!'; color='var(--success)'; }
+      else if(ratio < 0.6){ advice='Elevated risk — consider lifestyle changes.'; color='var(--warning)'; }
+      else { advice='Higher risk — consult a healthcare professional.'; color='var(--danger)'; }
+      document.getElementById('whrValue').textContent = display;
+      document.getElementById('whrAdvice').textContent = advice;
+      setIndicator(document.getElementById('whrIndicator'), document.getElementById('whrResultBox'), ratio, 1, color);
+    });
+    document.getElementById('whrReset').addEventListener('click', ()=>{['whrWaist','whrHeight'].forEach(id=>document.getElementById(id).value='');document.getElementById('whrResultBox').hidden=true});
+
+    // Keyboard: Enter triggers calc in section
+    document.querySelectorAll('input').forEach(inp=>inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ const sec = inp.closest('.section'); if(!sec) return; const btn = sec.querySelector('.btn'); if(btn) btn.click(); }}));
+
+    // Initialize placeholders according to default units
+    unitsSelect.dispatchEvent(new Event('change'));
+  </script>
+</body>
+</html>
