@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    "url": "https://www.urbmi.net",
-    "logo": "https://www.urbmi.net/favicon-96x96.png"
-  }
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "url": "https://www.urbmi.net",
+      "logo": "https://www.urbmi.net/favicon-96x96.png"
+    }
   </script>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="description" content="Calculate your BMI, BMR, TDEE, and body fat percentage instantly with UrBMI. Free and easy-to-use health calculator for men and women to track calories and fitness goals.">
@@ -94,7 +94,114 @@
     .tint-warning{background:linear-gradient(90deg,#fffaf0,#ffffff)}
     .tint-danger{background:linear-gradient(90deg,#fff6f6,#ffffff)}
     .tint-accent{background:linear-gradient(90deg,#f0f8ff,#ffffff)}
-
+    
+    @media (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        padding: 10px;
+      }
+  
+      .brand {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+  
+      .logo {
+        font-size: 18px;
+      }
+  
+      .subtitle {
+        font-size: 12px;
+      }
+  
+      .navlinks {
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        gap: 4px;
+      }
+  
+      .navlinks button {
+        font-size: 13px;
+        padding: 6px 10px;
+      }
+  
+      .units {
+        margin-top: 8px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+      }
+  
+      .wrap {
+        padding: 10px;
+        margin-top: 6px;
+      }
+  
+      header h1 {
+        font-size: 20px;
+      }
+  
+      p.lead {
+        font-size: 14px;
+      }
+  
+      .card {
+        padding: 16px;
+      }
+  
+      input[type=number], select {
+        font-size: 14px;
+        padding: 8px;
+      }
+  
+      .btn {
+        width: 100%;
+        margin-top: 6px;
+        font-size: 15px;
+      }
+  
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+      }
+  
+      aside.sidecard {
+        order: -1;
+        padding: 14px;
+      }
+  
+      .result-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+  
+      .bar {
+        width: 100%;
+        margin-top: 6px;
+      }
+    }
+  
+    @media (max-width: 480px) {
+      .logo {
+        font-size: 16px;
+      }
+  
+      .navlinks button {
+        font-size: 12px;
+        padding: 5px 8px;
+      }
+  
+      input, select {
+        font-size: 13px;
+      }
+  
+      h2 {
+        font-size: 18px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -638,6 +745,7 @@
   </script>
 </body>
 </html>
+
 
 
 
