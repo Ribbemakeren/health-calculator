@@ -1,4 +1,7 @@
+User-agent: Bingbot
+Allow: /
 User-agent: *
 Allow: /
 
 Sitemap: https://urbmi.net/sitemap.xml
+
